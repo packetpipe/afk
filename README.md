@@ -105,16 +105,32 @@ afk will wait (default: 1 hour) for the developer to reply. When they do, the re
 afk --whatsapp --msg "Your message"    # Send via WhatsApp
 afk --sms --msg "Your message"         # Send via SMS
 afk --whatsapp --msg "Done" --no-wait  # Send without waiting for reply
+afk --sms --msg "Done" --no-wait --no-hint  # No wait, no hint (saves SMS chars)
 afk --whatsapp --msg "Question?" --timeout 30m  # Custom timeout
 afk status                              # Check connection
 afk logout                              # Remove credentials
 ```
 
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `--sms` | Send message via SMS |
+| `--whatsapp` | Send message via WhatsApp |
+| `--msg` | Message content (required) |
+| `--session` | Session ID for grouping messages (auto-generated if not set) |
+| `--no-wait` | Send message and exit without waiting for response |
+| `--no-hint` | Don't append '[No reply expected]' hint (saves 22 chars for SMS) |
+| `--timeout` | How long to wait for response (default: 1h, e.g., 30m, 2h) |
+| `--reminder` | Reminder interval while waiting (default: 15m, 0 to disable) |
+| `--format` | Output format: llm (default), human, json |
+| `--quiet` | Minimal output (just response content) |
+
 ## Setting Up for Claude Code
 
 To let Claude Code use afk to contact you, add the following to your `~/.claude/CLAUDE.md` file:
 
-```markdown
+````markdown
 # AFK Tool - Contact Developer When Away
 
 When you need developer input and they may be away from their keyboard, use the `afk` command-line tool to reach them via WhatsApp or SMS.
@@ -130,35 +146,41 @@ Use afk when:
 ## How to Use
 
 Send a message and wait for response:
-\`\`\`bash
+```bash
 afk --whatsapp --msg "I found 3 approaches to implement caching:
 1. Redis (fast, needs infrastructure)
 2. In-memory (simple, loses data on restart)
 3. SQLite (persistent, slower)
 Which should I use?"
-\`\`\`
+```
 
 Send a notification without waiting:
-\`\`\`bash
+```bash
 afk --whatsapp --msg "Build completed. Tests: 142 passed, 0 failed." --no-wait
-\`\`\`
+```
+
+Send SMS notification without the '[No reply expected]' hint (saves characters):
+```bash
+afk --sms --msg "Build complete. 142 passed." --no-wait --no-hint
+```
 
 ## Output Format
 
 Responses are wrapped in `<response>` tags for easy parsing:
-\`\`\`
+```
 <response>
 Use Redis, we already have it set up for sessions
 </response>
-\`\`\`
+```
 
 ## Tips
 
 - Keep questions clear and concise
 - Provide options when asking for decisions
 - Use --no-wait for notifications that don't need a reply
+- Use --no-hint with --no-wait for SMS to save 22 characters
 - SMS messages over 255 characters become web links automatically
-```
+````
 
 ## Other AI Agents
 
@@ -173,6 +195,7 @@ Usage:
 - afk --whatsapp --msg "Your question" - Send WhatsApp message and wait for reply
 - afk --sms --msg "Your message" - Send SMS and wait for reply
 - Add --no-wait to send without waiting for a response
+- Add --no-hint with --no-wait to skip '[No reply expected]' suffix (saves SMS chars)
 - Add --timeout 30m to set custom timeout (default: 1 hour)
 
 Use afk when you need developer input and they may be away from their keyboard.
@@ -193,6 +216,9 @@ tools:
 
       Send notification without waiting:
         afk --whatsapp --msg "Task complete" --no-wait
+
+      SMS notification (no hint to save chars):
+        afk --sms --msg "Done" --no-wait --no-hint
 
       Use when you need human input and the developer may be away.
 ```

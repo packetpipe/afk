@@ -150,7 +150,8 @@ func (c *Client) Health() (*HealthResponse, error) {
 // This is a lightweight check - we'll use the SSE endpoint which requires auth
 func (c *Client) ValidateKey() error {
 	// Try to connect to SSE with a dummy session - it will validate the key
-	req, err := http.NewRequest("GET", c.BaseURL+"/api/events/validate-key-test", nil)
+	// Session must match "afk.*" pattern for NATS stream
+	req, err := http.NewRequest("GET", c.BaseURL+"/api/events/afk-validate", nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

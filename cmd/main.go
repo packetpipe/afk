@@ -62,6 +62,7 @@ func run() int {
 	msgFlag := flag.String("msg", "", "Message content")
 	sessionFlag := flag.String("session", "", "Session ID (auto-generated if not set)")
 	noWaitFlag := flag.Bool("no-wait", false, "Send message and exit without waiting")
+	noHintFlag := flag.Bool("no-hint", false, "Don't append '[No reply expected]' hint (use with --no-wait)")
 	timeoutFlag := flag.Duration("timeout", time.Hour, "Timeout for waiting (default: 1h)")
 	reminderFlag := flag.String("reminder", "", "Reminder interval (e.g., 15m, 0 to disable)")
 	formatFlag := flag.String("format", "", "Output format: llm, human, json")
@@ -135,9 +136,9 @@ func run() int {
 	// Create API client
 	client := api.NewClient(cfg.APIURL, cfg.APIKey)
 
-	// Prepare message - append no-reply notice if --no-wait is set
+	// Prepare message - append no-reply notice if --no-wait is set (unless --no-hint)
 	message := *msgFlag
-	if *noWaitFlag {
+	if *noWaitFlag && !*noHintFlag {
 		message = message + "\n\n[No reply expected]"
 	}
 
@@ -395,6 +396,7 @@ MESSAGE FLAGS:
   --msg          Message content (required with --sms or --whatsapp)
   --session      Session ID for grouping messages (auto-generated if not set)
   --no-wait      Send message and exit without waiting for response
+  --no-hint      Don't append '[No reply expected]' (saves chars for SMS)
   --timeout      How long to wait for response (default: 1h, e.g., 30m, 2h)
   --reminder     Reminder interval while waiting (default: 15m, 0 to disable)
   --format       Output format: llm (default), human, json

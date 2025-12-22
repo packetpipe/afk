@@ -128,7 +128,45 @@ afk logout                              # Remove credentials
 
 ## Setting Up for Claude Code
 
-To let Claude Code use afk to contact you, add the following to your `~/.claude/CLAUDE.md` file:
+### Step 1: Allow afk to Run Without Permission Prompts (Critical)
+
+**This step is essential.** By default, Claude Code asks for permission before running shell commands. If you're AFK, you can't approve the command - defeating the purpose of this tool.
+
+Add `afk` to your allowed commands in `~/.claude/settings.json`:
+
+```json
+{
+  "allowedCommands": [
+    {
+      "command": "afk",
+      "args": "*"
+    }
+  ]
+}
+```
+
+Or if you already have other allowed commands, add the afk entry to the existing array:
+
+```json
+{
+  "allowedCommands": [
+    {
+      "command": "npm",
+      "args": "test"
+    },
+    {
+      "command": "afk",
+      "args": "*"
+    }
+  ]
+}
+```
+
+**Restart Claude Code** after editing settings.json for changes to take effect.
+
+### Step 2: Add Instructions to CLAUDE.md
+
+Add the following to your `~/.claude/CLAUDE.md` file:
 
 ````markdown
 # AFK Tool - Contact Developer When Away
@@ -229,7 +267,10 @@ For any AI agent that can execute shell commands:
 
 1. Ensure `afk` is in the system PATH
 2. Run `afk login` to configure credentials
-3. Instruct the agent to use `afk --whatsapp --msg "..."` when it needs developer input
+3. **Allow `afk` to run without permission prompts** (if your agent requires approval for shell commands)
+4. Instruct the agent to use `afk --whatsapp --msg "..."` when it needs developer input
+
+> **Important:** If your AI agent asks for permission before running shell commands, you must configure it to allow `afk` without prompts. Otherwise, you won't be able to approve the command while AFK.
 
 ## Configuration
 

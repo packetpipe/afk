@@ -89,10 +89,11 @@ Enter your API key and optionally set a system name (e.g., "Claude Code") that a
 
 ```bash
 # Send via WhatsApp (recommended)
-afk --whatsapp --msg "Should I use Redis or PostgreSQL for caching?"
+# Use $'...' syntax to avoid shell escaping issues with ! and apostrophes
+afk --whatsapp --msg $'Should I use Redis or PostgreSQL for caching?'
 
 # Send via SMS
-afk --sms --msg "Build complete. Deploy to staging?"
+afk --sms --msg $'Build complete. Deploy to staging?'
 ```
 
 ### 4. Wait for Response
@@ -101,15 +102,44 @@ afk will wait (default: 1 hour) for the developer to reply. When they do, the re
 
 ## Usage
 
-```
-afk --whatsapp --msg "Your message"    # Send via WhatsApp
-afk --sms --msg "Your message"         # Send via SMS
-afk --whatsapp --msg "Done" --no-wait  # Send without waiting for reply
-afk --sms --msg "Done" --no-wait --no-hint  # No wait, no hint (saves SMS chars)
-afk --whatsapp --msg "Question?" --timeout 30m  # Custom timeout
+```bash
+afk --whatsapp --msg $'Your message!'   # Send via WhatsApp
+afk --sms --msg $'Your message!'        # Send via SMS
+afk --whatsapp --msg $'Done!' --no-wait # Send without waiting for reply
+afk --sms --msg $'Done' --no-wait --no-hint  # No wait, no hint (saves SMS chars)
+afk --whatsapp --msg $'Question?' --timeout 30m  # Custom timeout
 afk status                              # Check connection
 afk logout                              # Remove credentials
 ```
+
+## Shell Quoting (Important for AI Agents)
+
+When calling `afk` from a shell, always use **`$'...'` syntax** (ANSI-C quoting) for the message. This prevents shell escaping issues with special characters.
+
+**The Problem:**
+```bash
+# These may escape ! to \! in the delivered message:
+afk --whatsapp --msg "Hello! How are you?"
+afk --whatsapp --msg 'Hello! How are you?'
+```
+
+**The Solution:**
+```bash
+# Use $'...' - this delivers the message correctly:
+afk --whatsapp --msg $'Hello! How are you?'
+
+# For apostrophes, escape with backslash inside $'...':
+afk --whatsapp --msg $'Don\'t forget to check the logs!'
+
+# Multiline messages work too:
+afk --whatsapp --msg $'Found 3 options:
+1. Redis
+2. Memcached
+3. In-memory
+Which do you prefer?'
+```
+
+This is especially important for AI agents (Claude Code, Codex, etc.) that invoke `afk` programmatically.
 
 ### Flags
 
@@ -183,23 +213,35 @@ Use afk when:
 
 ## How to Use
 
+**IMPORTANT: Shell Quoting**
+
+Always use `$'...'` syntax (ANSI-C quoting) to avoid shell escaping issues with special characters like `!` and apostrophes:
+
+```bash
+# Correct - use $'...' syntax
+afk --whatsapp --msg $'Don\'t forget! This works correctly.'
+
+# Wrong - may escape ! to \!
+afk --whatsapp --msg "Don't forget! This might have issues."
+```
+
 Send a message and wait for response:
 ```bash
-afk --whatsapp --msg "I found 3 approaches to implement caching:
+afk --whatsapp --msg $'I found 3 approaches to implement caching:
 1. Redis (fast, needs infrastructure)
 2. In-memory (simple, loses data on restart)
 3. SQLite (persistent, slower)
-Which should I use?"
+Which should I use?'
 ```
 
 Send a notification without waiting:
 ```bash
-afk --whatsapp --msg "Build completed. Tests: 142 passed, 0 failed." --no-wait
+afk --whatsapp --msg $'Build completed! Tests: 142 passed, 0 failed.' --no-wait
 ```
 
 Send SMS notification without the '[No reply expected]' hint (saves characters):
 ```bash
-afk --sms --msg "Build complete. 142 passed." --no-wait --no-hint
+afk --sms --msg $'Build complete. 142 passed.' --no-wait --no-hint
 ```
 
 ## Output Format
@@ -229,9 +271,13 @@ Add to your system prompt or instructions:
 ```
 You have access to the `afk` command-line tool for contacting the developer when they're away.
 
+IMPORTANT: Always use $'...' quoting syntax to avoid shell escaping issues:
+  afk --whatsapp --msg $'Your message here!'
+  afk --whatsapp --msg $'Don\'t forget the apostrophe escaping!'
+
 Usage:
-- afk --whatsapp --msg "Your question" - Send WhatsApp message and wait for reply
-- afk --sms --msg "Your message" - Send SMS and wait for reply
+- afk --whatsapp --msg $'Your question' - Send WhatsApp message and wait for reply
+- afk --sms --msg $'Your message' - Send SMS and wait for reply
 - Add --no-wait to send without waiting for a response
 - Add --no-hint with --no-wait to skip '[No reply expected]' suffix (saves SMS chars)
 - Add --timeout 30m to set custom timeout (default: 1 hour)
@@ -249,14 +295,19 @@ tools:
   - name: afk
     description: Contact developer via WhatsApp/SMS when they're AFK
     usage: |
+      IMPORTANT: Always use $'...' quoting to avoid shell escaping issues.
+
       Send message and wait for reply:
-        afk --whatsapp --msg "Your question here"
+        afk --whatsapp --msg $'Your question here!'
 
       Send notification without waiting:
-        afk --whatsapp --msg "Task complete" --no-wait
+        afk --whatsapp --msg $'Task complete!' --no-wait
 
       SMS notification (no hint to save chars):
-        afk --sms --msg "Done" --no-wait --no-hint
+        afk --sms --msg $'Done' --no-wait --no-hint
+
+      Escape apostrophes with backslash:
+        afk --whatsapp --msg $'Don\'t forget this syntax!'
 
       Use when you need human input and the developer may be away.
 ```
@@ -268,7 +319,8 @@ For any AI agent that can execute shell commands:
 1. Ensure `afk` is in the system PATH
 2. Run `afk login` to configure credentials
 3. **Allow `afk` to run without permission prompts** (if your agent requires approval for shell commands)
-4. Instruct the agent to use `afk --whatsapp --msg "..."` when it needs developer input
+4. Instruct the agent to use `afk --whatsapp --msg $'...'` when it needs developer input
+5. **Always use `$'...'` quoting** to avoid shell escaping issues with `!` and apostrophes
 
 > **Important:** If your AI agent asks for permission before running shell commands, you must configure it to allow `afk` without prompts. Otherwise, you won't be able to approve the command while AFK.
 

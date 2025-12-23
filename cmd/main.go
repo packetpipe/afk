@@ -422,14 +422,13 @@ FOR AI AGENTS (Claude Code, Codex, Amp, etc.):
 
   SHELL QUOTING:
 
-    For Claude Code:
-      Use double quotes - afk handles escaped characters automatically:
-        afk --whatsapp --msg "Hello! How are you?"
-        afk --whatsapp --msg "Don't forget to check the logs!"
+    Use double quotes for all messages:
+      afk --whatsapp --msg "Hello! How are you?"
+      afk --whatsapp --msg "Don't forget to check the logs!"
 
-    For other shells/agents (Codex, Amp, terminal):
-      Use $'...' syntax to avoid escaping issues:
-        afk --whatsapp --msg $'Hello! Don\'t forget this syntax.'
+    The afk tool automatically unescapes shell escape sequences
+    (\! → !, \? → ?, \* → *, \[ → [, \] → ]) so your message
+    arrives correctly regardless of which shell you use.
 
   When to use afk:
     - You need a decision that only the developer can make
@@ -443,14 +442,14 @@ FOR AI AGENTS (Claude Code, Codex, Amp, etc.):
     4. Continue your work based on their answer
 
   Example - Asking for a decision:
-    afk --sms --msg $'I found 3 approaches to implement caching:
+    afk --sms --msg "I found 3 approaches to implement caching:
     1. Redis (fast, needs infrastructure)
     2. In-memory (simple, loses data on restart)
     3. SQLite (persistent, slower)
-    Which should I use?'
+    Which should I use?"
 
   Example - Long message (auto-creates web link for SMS > 255 chars):
-    afk --sms --msg $'I need your input on the database schema. Here are the options:
+    afk --sms --msg "I need your input on the database schema. Here are the options:
 
     Option A: Normalized (3NF)
     - Pros: Data integrity, less duplication
@@ -460,10 +459,10 @@ FOR AI AGENTS (Claude Code, Codex, Amp, etc.):
     - Pros: Fast reads, simple queries
     - Cons: Data duplication, update anomalies
 
-    Which approach fits better for this use case?'
+    Which approach fits better for this use case?"
 
   Example - Quick notification without waiting:
-    afk --whatsapp --msg $'Build completed! Tests: 142 passed.' --no-wait
+    afk --whatsapp --msg "Build completed! Tests: 142 passed." --no-wait
 
   Tips:
     - SMS messages > 255 chars automatically become web links
@@ -503,19 +502,13 @@ EXAMPLES:
   # First-time setup
   afk login
 
-  # Claude Code - use double quotes (afk handles escaping)
+  # Send message and wait for response
   afk --sms --msg "Should I deploy to staging or production?"
-  afk --whatsapp --msg "Build complete! Tests passed." --no-wait
-
-  # Other shells - use $'...' quoting
-  afk --sms --msg $'Should I deploy to staging or production?'
-  afk --whatsapp --msg $'Need approval to merge PR #123' --timeout 30m
+  afk --whatsapp --msg "Need approval to merge PR #123" --timeout 30m
 
   # Send notification without waiting
+  afk --whatsapp --msg "Build complete! Tests passed." --no-wait
   afk --sms --msg "Task completed: Database migration finished!" --no-wait
-
-  # Use specific session for conversation grouping
-  afk --sms --msg "Follow-up: which auth provider?" --session "auth-decision"
 
   # Check your connection
   afk status`

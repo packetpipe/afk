@@ -89,11 +89,10 @@ Enter your API key and optionally set a system name (e.g., "Claude Code") that a
 
 ```bash
 # Send via WhatsApp (recommended)
-# Use $'...' syntax to avoid shell escaping issues with ! and apostrophes
-afk --whatsapp --msg $'Should I use Redis or PostgreSQL for caching?'
+afk --whatsapp --msg "Should I use Redis or PostgreSQL for caching?"
 
 # Send via SMS
-afk --sms --msg $'Build complete. Deploy to staging?'
+afk --sms --msg "Build complete. Deploy to staging?"
 ```
 
 ### 4. Wait for Response
@@ -103,47 +102,33 @@ afk will wait (default: 1 hour) for the developer to reply. When they do, the re
 ## Usage
 
 ```bash
-afk --whatsapp --msg $'Your message!'   # Send via WhatsApp
-afk --sms --msg $'Your message!'        # Send via SMS
-afk --whatsapp --msg $'Done!' --no-wait # Send without waiting for reply
-afk --sms --msg $'Done' --no-wait --no-hint  # No wait, no hint (saves SMS chars)
-afk --whatsapp --msg $'Question?' --timeout 30m  # Custom timeout
+afk --whatsapp --msg "Your message!"    # Send via WhatsApp
+afk --sms --msg "Your message!"         # Send via SMS
+afk --whatsapp --msg "Done!" --no-wait  # Send without waiting for reply
+afk --sms --msg "Done" --no-wait --no-hint  # No wait, no hint (saves SMS chars)
+afk --whatsapp --msg "Question?" --timeout 30m  # Custom timeout
 afk status                              # Check connection
 afk logout                              # Remove credentials
 ```
 
-## Shell Quoting (Important for AI Agents)
+## Shell Quoting
 
-### For Claude Code
-
-Due to a [known issue](https://github.com/anthropics/claude-code/issues) in Claude Code, use **double quotes** instead of `$'...'` syntax:
+Use **double quotes** for all messages. The `afk` tool automatically handles shell escape sequences:
 
 ```bash
-# Use double quotes - afk handles the escaping automatically:
+# Simple messages
 afk --whatsapp --msg "Hello! How are you?"
 afk --whatsapp --msg "Don't forget to check the logs!"
-```
 
-Claude Code escapes `!` to `\!` when using double quotes, but `afk` automatically converts it back. The `$'...'` syntax, while correct for shell escaping, triggers Claude Code's permission prompt even when `afk` is in the allowed tools list.
-
-### For Other Shells/Agents
-
-When calling `afk` from a regular shell or other AI agents, use **`$'...'` syntax** (ANSI-C quoting) for the message:
-
-```bash
-# Use $'...' - this delivers the message correctly:
-afk --whatsapp --msg $'Hello! How are you?'
-
-# For apostrophes, escape with backslash inside $'...':
-afk --whatsapp --msg $'Don\'t forget to check the logs!'
-
-# Multiline messages work too:
-afk --whatsapp --msg $'Found 3 options:
+# Multiline messages
+afk --whatsapp --msg "Found 3 options:
 1. Redis
 2. Memcached
 3. In-memory
-Which do you prefer?'
+Which do you prefer?"
 ```
+
+Some shells escape special characters like `!` to `\!` in double-quoted strings. The `afk` tool automatically unescapes these (`\!` → `!`, `\?` → `?`, `\*` → `*`, `\[` → `[`, `\]` → `]`) so your message arrives correctly.
 
 ### Flags
 
@@ -179,8 +164,6 @@ Add `afk` to your allowed commands in `.claude/settings.local.json` (project) or
 ```
 
 **Restart Claude Code** after editing settings for changes to take effect.
-
-> **Known Issue:** Claude Code's pattern matching doesn't recognize `$'...'` ANSI-C quoting syntax. Commands like `afk --msg $'Hello!'` will still prompt for permission even with `Bash(afk:*)` allowed. Use double quotes instead: `afk --msg "Hello!"`. The `afk` tool automatically converts `\!` back to `!` to handle Claude Code's escaping. See [anthropics/claude-code#XXXX](https://github.com/anthropics/claude-code/issues) for the upstream bug report.
 
 ### Step 2: Add Instructions to CLAUDE.md
 
@@ -245,13 +228,9 @@ Add to your system prompt or instructions:
 ```
 You have access to the `afk` command-line tool for contacting the developer when they're away.
 
-IMPORTANT: Always use $'...' quoting syntax to avoid shell escaping issues:
-  afk --whatsapp --msg $'Your message here!'
-  afk --whatsapp --msg $'Don\'t forget the apostrophe escaping!'
-
-Usage:
-- afk --whatsapp --msg $'Your question' - Send WhatsApp message and wait for reply
-- afk --sms --msg $'Your message' - Send SMS and wait for reply
+Usage (always use double quotes for messages):
+- afk --whatsapp --msg "Your question" - Send WhatsApp message and wait for reply
+- afk --sms --msg "Your message" - Send SMS and wait for reply
 - Add --no-wait to send without waiting for a response
 - Add --no-hint with --no-wait to skip '[No reply expected]' suffix (saves SMS chars)
 - Add --timeout 30m to set custom timeout (default: 1 hour)
@@ -269,19 +248,14 @@ tools:
   - name: afk
     description: Contact developer via WhatsApp/SMS when they're AFK
     usage: |
-      IMPORTANT: Always use $'...' quoting to avoid shell escaping issues.
-
       Send message and wait for reply:
-        afk --whatsapp --msg $'Your question here!'
+        afk --whatsapp --msg "Your question here!"
 
       Send notification without waiting:
-        afk --whatsapp --msg $'Task complete!' --no-wait
+        afk --whatsapp --msg "Task complete!" --no-wait
 
       SMS notification (no hint to save chars):
-        afk --sms --msg $'Done' --no-wait --no-hint
-
-      Escape apostrophes with backslash:
-        afk --whatsapp --msg $'Don\'t forget this syntax!'
+        afk --sms --msg "Done" --no-wait --no-hint
 
       Use when you need human input and the developer may be away.
 ```
@@ -293,8 +267,7 @@ For any AI agent that can execute shell commands:
 1. Ensure `afk` is in the system PATH
 2. Run `afk login` to configure credentials
 3. **Allow `afk` to run without permission prompts** (if your agent requires approval for shell commands)
-4. Instruct the agent to use `afk --whatsapp --msg $'...'` when it needs developer input
-5. **Always use `$'...'` quoting** to avoid shell escaping issues with `!` and apostrophes
+4. Instruct the agent to use `afk --whatsapp --msg "..."` when it needs developer input
 
 > **Important:** If your AI agent asks for permission before running shell commands, you must configure it to allow `afk` without prompts. Otherwise, you won't be able to approve the command while AFK.
 

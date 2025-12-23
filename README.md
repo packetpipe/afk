@@ -114,16 +114,22 @@ afk logout                              # Remove credentials
 
 ## Shell Quoting (Important for AI Agents)
 
-When calling `afk` from a shell, always use **`$'...'` syntax** (ANSI-C quoting) for the message. This prevents shell escaping issues with special characters.
+### For Claude Code
 
-**The Problem:**
+Due to a [known issue](https://github.com/anthropics/claude-code/issues) in Claude Code, use **double quotes** instead of `$'...'` syntax:
+
 ```bash
-# These may escape ! to \! in the delivered message:
+# Use double quotes - afk handles the escaping automatically:
 afk --whatsapp --msg "Hello! How are you?"
-afk --whatsapp --msg 'Hello! How are you?'
+afk --whatsapp --msg "Don't forget to check the logs!"
 ```
 
-**The Solution:**
+Claude Code escapes `!` to `\!` when using double quotes, but `afk` automatically converts it back. The `$'...'` syntax, while correct for shell escaping, triggers Claude Code's permission prompt even when `afk` is in the allowed tools list.
+
+### For Other Shells/Agents
+
+When calling `afk` from a regular shell or other AI agents, use **`$'...'` syntax** (ANSI-C quoting) for the message:
+
 ```bash
 # Use $'...' - this delivers the message correctly:
 afk --whatsapp --msg $'Hello! How are you?'
@@ -138,8 +144,6 @@ afk --whatsapp --msg $'Found 3 options:
 3. In-memory
 Which do you prefer?'
 ```
-
-This is especially important for AI agents (Claude Code, Codex, etc.) that invoke `afk` programmatically.
 
 ### Flags
 
@@ -162,37 +166,21 @@ This is especially important for AI agents (Claude Code, Codex, etc.) that invok
 
 **This step is essential.** By default, Claude Code asks for permission before running shell commands. If you're AFK, you can't approve the command - defeating the purpose of this tool.
 
-Add `afk` to your allowed commands in `~/.claude/settings.json`:
+Add `afk` to your allowed commands in `.claude/settings.local.json` (project) or `~/.claude/settings.json` (global):
 
 ```json
 {
-  "allowedCommands": [
-    {
-      "command": "afk",
-      "args": "*"
-    }
-  ]
+  "permissions": {
+    "allow": [
+      "Bash(afk:*)"
+    ]
+  }
 }
 ```
 
-Or if you already have other allowed commands, add the afk entry to the existing array:
+**Restart Claude Code** after editing settings for changes to take effect.
 
-```json
-{
-  "allowedCommands": [
-    {
-      "command": "npm",
-      "args": "test"
-    },
-    {
-      "command": "afk",
-      "args": "*"
-    }
-  ]
-}
-```
-
-**Restart Claude Code** after editing settings.json for changes to take effect.
+> **Known Issue:** Claude Code's pattern matching doesn't recognize `$'...'` ANSI-C quoting syntax. Commands like `afk --msg $'Hello!'` will still prompt for permission even with `Bash(afk:*)` allowed. Use double quotes instead: `afk --msg "Hello!"`. The `afk` tool automatically converts `\!` back to `!` to handle Claude Code's escaping. See [anthropics/claude-code#XXXX](https://github.com/anthropics/claude-code/issues) for the upstream bug report.
 
 ### Step 2: Add Instructions to CLAUDE.md
 
@@ -213,35 +201,21 @@ Use afk when:
 
 ## How to Use
 
-**IMPORTANT: Shell Quoting**
-
-Always use `$'...'` syntax (ANSI-C quoting) to avoid shell escaping issues with special characters like `!` and apostrophes:
+Use double quotes for messages - `afk` automatically handles any shell escaping:
 
 ```bash
-# Correct - use $'...' syntax
-afk --whatsapp --msg $'Don\'t forget! This works correctly.'
-
-# Wrong - may escape ! to \!
-afk --whatsapp --msg "Don't forget! This might have issues."
-```
-
-Send a message and wait for response:
-```bash
-afk --whatsapp --msg $'I found 3 approaches to implement caching:
+# Send a message and wait for response
+afk --whatsapp --msg "I found 3 approaches to implement caching:
 1. Redis (fast, needs infrastructure)
 2. In-memory (simple, loses data on restart)
 3. SQLite (persistent, slower)
-Which should I use?'
-```
+Which should I use?"
 
-Send a notification without waiting:
-```bash
-afk --whatsapp --msg $'Build completed! Tests: 142 passed, 0 failed.' --no-wait
-```
+# Send a notification without waiting
+afk --whatsapp --msg "Build completed! Tests: 142 passed, 0 failed." --no-wait
 
-Send SMS notification without the '[No reply expected]' hint (saves characters):
-```bash
-afk --sms --msg $'Build complete. 142 passed.' --no-wait --no-hint
+# Send SMS notification without the '[No reply expected]' hint (saves characters)
+afk --sms --msg "Build complete. 142 passed." --no-wait --no-hint
 ```
 
 ## Output Format

@@ -136,8 +136,18 @@ func run() int {
 	// Create API client
 	client := api.NewClient(cfg.APIURL, cfg.APIKey)
 
-	// Prepare message - append no-reply notice if --no-wait is set (unless --no-hint)
+	// Prepare message
 	message := *msgFlag
+
+	// Unescape common shell escapes that Claude Code may add in double-quoted strings
+	// These appear when shell history expansion or other escaping is applied
+	message = strings.ReplaceAll(message, "\\!", "!")  // History expansion
+	message = strings.ReplaceAll(message, "\\?", "?")  // Glob pattern
+	message = strings.ReplaceAll(message, "\\*", "*")  // Glob pattern
+	message = strings.ReplaceAll(message, "\\[", "[")  // Glob pattern
+	message = strings.ReplaceAll(message, "\\]", "]")  // Glob pattern
+
+	// Append no-reply notice if --no-wait is set (unless --no-hint)
 	if *noWaitFlag && !*noHintFlag {
 		message = message + "\n\n[No reply expected]"
 	}
@@ -407,9 +417,16 @@ FOR AI AGENTS (Claude Code, Codex, Amp, etc.):
   USE AFK WHEN YOU NEED DEVELOPER INPUT AND THEY MAY BE AWAY
   ═══════════════════════════════════════════════════════════════════════
 
-  IMPORTANT - Shell Quoting:
-    Always use $'...' syntax to avoid escaping issues with ! and apostrophes:
-      afk --whatsapp --msg $'Hello! Don\'t forget this syntax.'
+  SHELL QUOTING:
+
+    For Claude Code:
+      Use double quotes - afk handles escaped characters automatically:
+        afk --whatsapp --msg "Hello! How are you?"
+        afk --whatsapp --msg "Don't forget to check the logs!"
+
+    For other shells/agents (Codex, Amp, terminal):
+      Use $'...' syntax to avoid escaping issues:
+        afk --whatsapp --msg $'Hello! Don\'t forget this syntax.'
 
   When to use afk:
     - You need a decision that only the developer can make
@@ -483,17 +500,19 @@ EXAMPLES:
   # First-time setup
   afk login
 
-  # Send SMS and wait for response (use $'...' quoting!)
-  afk --sms --msg $'Should I deploy to staging or production?'
+  # Claude Code - use double quotes (afk handles escaping)
+  afk --sms --msg "Should I deploy to staging or production?"
+  afk --whatsapp --msg "Build complete! Tests passed." --no-wait
 
-  # Send WhatsApp with custom timeout
+  # Other shells - use $'...' quoting
+  afk --sms --msg $'Should I deploy to staging or production?'
   afk --whatsapp --msg $'Need approval to merge PR #123' --timeout 30m
 
   # Send notification without waiting
-  afk --sms --msg $'Task completed: Database migration finished!' --no-wait
+  afk --sms --msg "Task completed: Database migration finished!" --no-wait
 
   # Use specific session for conversation grouping
-  afk --sms --msg $'Follow-up: which auth provider?' --session "auth-decision"
+  afk --sms --msg "Follow-up: which auth provider?" --session "auth-decision"
 
   # Check your connection
   afk status`

@@ -149,9 +149,11 @@ func (c *Client) Health() (*HealthResponse, error) {
 // ValidateKey checks if the API key is valid by making an authenticated request
 // This is a lightweight check - we'll use the SSE endpoint which requires auth
 func (c *Client) ValidateKey() error {
-	// Try to connect to SSE with a dummy session - it will validate the key
+	// Try to connect to SSE with a unique session - it will validate the key
 	// Session must match "afk.*" pattern for NATS stream
-	req, err := http.NewRequest("GET", c.BaseURL+"/api/events/afk-validate", nil)
+	// Use unique ID to avoid consumer conflicts with other validation attempts
+	sessionID := fmt.Sprintf("afk-validate-%d", time.Now().UnixNano())
+	req, err := http.NewRequest("GET", c.BaseURL+"/api/events/"+sessionID, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}

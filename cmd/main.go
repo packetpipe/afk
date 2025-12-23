@@ -127,11 +127,10 @@ func run() int {
 	// Create output formatter
 	out := output.New(cfg.Format, *quietFlag)
 
-	// Generate session ID if not provided
-	sessionID := *sessionFlag
-	if sessionID == "" {
-		sessionID = fmt.Sprintf("afk-%d", time.Now().UnixNano())
-	}
+	// Session ID is now generated server-side for security
+	// Client-provided session IDs (via --session flag) are ignored by the server
+	// but we keep the flag for backwards compatibility (it has no effect)
+	_ = *sessionFlag // Explicitly ignore - server generates session IDs
 
 	// Create API client
 	client := api.NewClient(cfg.APIURL, cfg.APIKey)
@@ -159,25 +158,29 @@ func run() int {
 
 	if *smsFlag {
 		msgType = "SMS"
-		resp, sendErr = client.SendSMS(message, sessionID)
+		resp, sendErr = client.SendSMS(message, "")
 	} else {
 		msgType = "WhatsApp"
-		resp, sendErr = client.SendWhatsApp(message, sessionID, cfg.SysName)
+		resp, sendErr = client.SendWhatsApp(message, "", cfg.SysName)
 	}
 
 	if sendErr != nil {
-		out.Error(500, sendErr.Error(), sessionID)
+		out.Error(500, sendErr.Error(), "")
 		return exitSendFailed
 	}
 
-	// Get message ID and actual session ID from response
+	// Get message ID and session ID from server response
+	// Server always generates and returns the session ID for security
 	messageID := ""
+	sessionID := ""
 	if resp != nil {
 		messageID = resp.MessageID
-		// Use server's session ID if provided (may differ from our request)
-		if resp.SessionID != "" {
-			sessionID = resp.SessionID
-		}
+		sessionID = resp.SessionID
+	}
+
+	if sessionID == "" {
+		out.Error(500, "Server did not return session ID", "")
+		return exitSendFailed
 	}
 
 	out.MessageSent(msgType, sessionID, messageID, len(*msgFlag), *timeoutFlag, !*noWaitFlag)

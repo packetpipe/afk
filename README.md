@@ -151,19 +151,23 @@ Some shells escape special characters like `!` to `\!` in double-quoted strings.
 
 **This step is essential.** By default, Claude Code asks for permission before running shell commands. If you're AFK, you can't approve the command - defeating the purpose of this tool.
 
-Add `afk` to your allowed commands in `.claude/settings.local.json` (project) or `~/.claude/settings.json` (global):
+Add `afk` to your allowed commands in `~/.claude/settings.json` (global) or `.claude/settings.json` (project-level):
 
 ```json
 {
   "permissions": {
     "allow": [
-      "Bash(afk:*)"
+      "Bash(afk:*)",
+      "Bash(afk --sms:*)",
+      "Bash(afk --whatsapp:*)"
     ]
   }
 }
 ```
 
-**Restart Claude Code** after editing settings for changes to take effect.
+You can verify your permissions are active by running `/permissions` in Claude Code.
+
+**Note:** You may need to restart Claude Code after editing settings for changes to take effect.
 
 ### Step 2: Add Instructions to CLAUDE.md
 
@@ -266,10 +270,13 @@ For any AI agent that can execute shell commands:
 
 1. Ensure `afk` is in the system PATH
 2. Run `afk login` to configure credentials
-3. **Allow `afk` to run without permission prompts** (if your agent requires approval for shell commands)
+3. **Allow `afk` to run without permission prompts** - this is critical! If your agent asks for approval before running shell commands, configure it to allow `afk` commands. For Claude Code, add to `~/.claude/settings.json`:
+   ```json
+   {"permissions": {"allow": ["Bash(afk:*)", "Bash(afk --sms:*)", "Bash(afk --whatsapp:*)"]}}
+   ```
 4. Instruct the agent to use `afk --whatsapp --msg "..."` when it needs developer input
 
-> **Important:** If your AI agent asks for permission before running shell commands, you must configure it to allow `afk` without prompts. Otherwise, you won't be able to approve the command while AFK.
+> **Important:** If you can't approve commands while AFK, the tool is useless. Always configure your agent to allow `afk` without prompts.
 
 ## Configuration
 

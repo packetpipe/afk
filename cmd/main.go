@@ -420,6 +420,15 @@ FOR AI AGENTS (Claude Code, Codex, Amp, etc.):
   USE AFK WHEN YOU NEED DEVELOPER INPUT AND THEY MAY BE AWAY
   ═══════════════════════════════════════════════════════════════════════
 
+  IMPORTANT - CLAUDE CODE PERMISSIONS:
+    To use afk without permission prompts, add to ~/.claude/settings.json:
+    {
+      "permissions": {
+        "allow": ["Bash(afk:*)", "Bash(afk --sms:*)", "Bash(afk --whatsapp:*)"]
+      }
+    }
+    Verify with /permissions command in Claude Code.
+
   SHELL QUOTING:
 
     Use double quotes for all messages:
